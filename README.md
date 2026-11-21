@@ -2,6 +2,8 @@
 
 **Teaching AI to understand and speak Esan, in its own dialects, tones and voice.**
 
+> 🤝 **We're looking for collaborators!** Esan speakers from any dialect, linguists, teachers, engineers, and anyone with Esan recordings or texts. See [How you can help](#how-you-can-help).
+
 Esan (ISO 639-3: `ish`) is an Edoid language spoken in Edo State, Nigeria. It is tonal, and it varies from town to town: Uromi, Ekpoma, Irrua, Ubiaja, Ugboha, Ewohimi, Igueben, Ewatto and more. Almost no AI tools exist for it today. This project aims to change that, built with Esan speakers and owned by the community.
 
 ## Goals
@@ -38,12 +40,14 @@ Esan (ISO 639-3: `ish`) is an Edoid language spoken in Edo State, Nigeria. It is
 
 ## How you can help
 
+We're actively looking for collaborators. You don't need to be an AI expert. If you speak, teach, study or love Esan, there's a place for you.
+
 - **Speak Esan?** Record words and sentences in your dialect.
 - **Linguist or teacher?** Help check spellings, tones and grammar.
 - **Engineer?** Help with data tooling and model training.
 - **Have Esan books, recordings or radio archives?** Tell us about them.
 
-Open an issue in this repository to get involved.
+**To get involved, [open an issue](../../issues/new)** saying who you are, your dialect (if you speak Esan) and how you'd like to help.
 
 ---
 *Status: planning stage. Code and data will be added here as they are ready and cleared for release.*
