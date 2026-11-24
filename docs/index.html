@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esan AI — teaching machines to speak Esan</title>
+<meta name="description" content="Esan AI is an open project teaching machines to understand and speak Esan, in every dialect and every tone.">
+<meta property="og:title" content="Esan AI — teaching machines to speak Esan">
+<meta property="og:description" content="Every dialect. Every tone. Spoken back with real intonation.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ekkohng.github.io/esan-ai/">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&amp;display=swap">
+<style>
+body{margin:0}
+.page{
+  --bg:#FFFFFF; --paper:#FBFAF7; --ink:#1E1E1E; --ink2:#55534F; --muted:#7E7C77; --line:#2A2A2A;
+  --purple:#5A4FCF; --purple-soft:rgba(90,79,207,.22); --purple-wash:#F1EFFC;
+  --blue:#1F78A8; --blue-soft:rgba(31,120,168,.22); --blue-wash:#E9F4F9;
+  --rose:#B8405A; --rose-soft:rgba(184,64,90,.22); --rose-wash:#FAEDF0;
+  --dash:#B9B6AF;
+  background:var(--bg); color:var(--ink);
+  font-family:'Patrick Hand', 'Comic Neue', system-ui, sans-serif;
+  transition:background-color .5s ease, color .5s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.page[data-theme="dark"]{
+  --bg:#131315; --paper:#1A1A1D; --ink:#EDEBE6; --ink2:#C2BFB8; --muted:#9A978F; --line:#E4E1DA;
+  --purple:#A99CFF; --purple-soft:rgba(169,156,255,.28); --purple-wash:#1E1B30;
+  --blue:#6CC3EA; --blue-soft:rgba(108,195,234,.26); --blue-wash:#13242D;
+  --rose:#F08AA0; --rose-soft:rgba(240,138,160,.26); --rose-wash:#2C171C;
+  --dash:#55524D;
+}
+.page *{box-sizing:border-box}
+.page a{color:var(--blue)} .page a:hover{color:var(--purple)}
+.sketch{border:2px solid var(--line); border-radius:255px 14px 225px 14px/14px 225px 14px 255px}
+.sketch-2{border:2px solid var(--line); border-radius:14px 225px 14px 255px/255px 14px 225px 14px}
+.hatch-p{background:repeating-linear-gradient(135deg,var(--purple-soft) 0 2px,transparent 2px 9px)}
+.hatch-b{background:repeating-linear-gradient(135deg,var(--blue-soft) 0 2px,transparent 2px 9px)}
+.hatch-r{background:repeating-linear-gradient(135deg,var(--rose-soft) 0 2px,transparent 2px 9px)}
+.wrap{width:100%; max-width:1120px; margin:0 auto}
+
+/* buttons + nav */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:48px; padding:10px 22px; font-family:inherit; font-size:21px; text-decoration:none; cursor:pointer; transition:transform .2s ease}
+.btn:hover{transform:translateY(-2px) rotate(-.6deg)}
+.page a.btn-solid{background:var(--ink); color:var(--bg)} .page a.btn-solid:hover{color:var(--bg)}
+.page a.btn-ghost{color:var(--ink)} .page a.btn-ghost:hover{color:var(--purple)}
+.navlinks{display:flex; align-items:center; gap:6px}
+.navlink{color:var(--ink2) !important; text-decoration:none; font-size:20px; padding:10px 10px; min-height:44px; display:inline-flex; align-items:center}
+.navlink:hover{color:var(--purple) !important}
+.iconbtn{display:inline-flex; align-items:center; justify-content:center; width:46px; height:46px; background:transparent; color:var(--ink); cursor:pointer; padding:0; font-family:inherit}
+.iconbtn:hover{transform:rotate(-6deg)}
+.menubtn{display:none}
+.mobmenu{display:none}
+.cap .lit{color:var(--ink)} .cap .dim{color:var(--muted)}
+.cue{position:absolute; left:0; right:0; bottom:16px; text-align:center; font-size:19px; color:var(--muted)}
+
+/* ===== scroll story =====
+   Static by default (canvas preview, reduced motion): scenes stack as normal sections.
+   With .fx each scene is a tall track with a sticky stage; its frames cross-fade with blur. */
+.scene{position:relative}
+.stage{position:relative}
+.frame{position:relative; padding:56px 20px}
+.bgnum{display:none}
+.fx main{padding-top:0}
+.fx .scene{height:calc((var(--n) + 1) * 100vh); height:calc((var(--n) + 1) * 100svh)}
+.fx .stage{position:sticky; top:0; height:100vh; height:100svh; overflow:hidden}
+.fx .frame{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:84px 20px 36px; opacity:0; will-change:opacity, filter, transform}
+.fx [data-step]{opacity:0}
+.fx .bgnum{display:block; position:absolute; right:-2vw; bottom:-12svh; font-size:78svh; line-height:1; color:var(--purple-wash); pointer-events:none; user-select:none; transition:color .5s ease}
+
+.reveal{transition:opacity .9s ease, filter .9s ease, transform .9s ease}
+.fx .reveal{opacity:0; filter:blur(12px); transform:translateY(34px)}
+.fx .reveal.in{opacity:1; filter:blur(0); transform:none}
+
+@keyframes lift{from{opacity:0; filter:blur(12px); transform:translateY(24px)} to{opacity:1; filter:blur(0); transform:none}}
+.lift{animation:lift 1.1s cubic-bezier(.2,.7,.2,1) both}
+.d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}.d4{animation-delay:.9s}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.pulse{animation:pulse 2.2s ease-in-out infinite}
+@keyframes draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+.draw{stroke-dasharray:600; animation:draw 2.4s ease .6s both}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+.bob{display:inline-block; animation:bob 1.6s ease-in-out infinite}
+
+/* type scale */
+.h-hero{margin:0; font-size:clamp(44px, 7.2vw, 88px); line-height:.98; font-weight:400; letter-spacing:-.5px}
+.h-ch{margin:0; font-size:clamp(46px, 7vw, 84px); font-weight:400; line-height:1}
+.lede{margin:0; font-size:clamp(21px, 2.4vw, 28px); line-height:1.38; color:var(--ink2)}
+.capt{margin:0 auto; text-align:center; font-size:clamp(30px, 4.6vw, 56px); line-height:1.16; max-width:22ch}
+.num{flex:none; width:clamp(64px, 9vw, 96px); height:clamp(64px, 9vw, 96px); border:2.5px solid var(--rose); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:clamp(38px, 5vw, 54px); color:var(--rose)}
+
+/* hero */
+.hero{display:flex; flex-wrap:wrap; align-items:center; gap:28px 48px}
+.hero-text{flex:1 1 440px; min-width:0}
+.hero-art{flex:1 1 380px; min-width:0; display:flex; justify-content:center}
+.hero-art svg{width:100%; max-width:520px; height:auto; max-height:44svh}
+.ctas{display:flex; gap:14px; flex-wrap:wrap; margin-top:30px}
+
+/* vision stack */
+.stack{display:flex; flex-direction:column; align-items:center; max-width:760px; margin:0 auto; width:100%}
+.layer{width:100%; padding:18px 26px; display:flex; justify-content:space-between; align-items:baseline; gap:4px 16px; flex-wrap:wrap}
+.layer .ln{font-size:clamp(23px, 2.6vw, 30px)} .layer .ld{font-size:clamp(16px, 1.7vw, 20px); color:var(--ink2)}
+.arrow{display:block; height:44px; width:24px}
+.apps{width:100%; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px}
+.apps > div{padding:12px 8px; text-align:center; font-size:clamp(18px, 2vw, 22px)}
+
+/* goals */
+.goal{display:flex; flex-wrap:wrap; align-items:center; gap:28px 64px; max-width:980px; margin:0 auto; width:100%}
+.goal-art{flex:0 0 auto; width:clamp(180px, 26vw, 300px); aspect-ratio:3/2; display:flex; align-items:center; justify-content:center; background:var(--paper)}
+.goal-art svg{width:62%; height:auto}
+.goal-text{flex:1 1 320px; min-width:0}
+.goal-text h3{margin:6px 0 12px; font-size:clamp(44px, 6.4vw, 78px); font-weight:400; line-height:1}
+.goal-text p{margin:0; font-size:clamp(21px, 2.4vw, 28px); line-height:1.36; color:var(--ink2); max-width:28ch}
+.kicker{font-size:20px; color:var(--muted)}
+
+/* dialects */
+.pills{display:flex; flex-wrap:wrap; justify-content:center; gap:12px; max-width:760px; margin:0 auto}
+.pills span{padding:8px 18px; font-size:clamp(19px, 2.2vw, 23px)}
+
+/* progress */
+.plist{list-style:none; margin:0 auto; padding:0; display:flex; flex-direction:column; gap:22px; max-width:900px; width:100%}
+.pi{display:grid; grid-template-columns:minmax(0, 1fr) 280px; align-items:center; gap:6px 28px}
+.pi h3{margin:0 0 2px; font-size:clamp(21px, 2.4vw, 28px); font-weight:400}
+.pi p{margin:0; font-size:clamp(16px, 1.7vw, 20px); color:var(--ink2); line-height:1.32}
+.pbar{display:flex; align-items:center; gap:12px}
+.pbar .track{flex:1; height:32px; padding:4px}
+.pbar .lbl{font-size:20px; width:88px}
+
+/* chat box */
+.cb-win{background:var(--bg); overflow:hidden; transition:background-color .5s ease}
+.cb-bar{display:flex; align-items:center; gap:14px; padding:10px 18px; background:var(--purple-wash); border-bottom:2px solid var(--line)}
+.cb-dots{display:flex; gap:6px}
+.cb-dots i{display:block; width:12px; height:12px; border:1.6px solid var(--ink2); border-radius:50%}
+.cb-log{height:min(52vh, 420px); overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:12px; overscroll-behavior:contain}
+.cb-msg{max-width:84%; padding:10px 16px; font-size:20px; line-height:1.35; white-space:pre-wrap; overflow-wrap:anywhere}
+.cb-bot{align-self:flex-start; border:2px solid var(--line); border-radius:255px 14px 225px 14px/14px 225px 14px 255px; background:var(--paper)}
+.cb-me{align-self:flex-end; background:var(--ink); color:var(--bg); border-radius:14px 225px 14px 255px/255px 14px 225px 14px}
+.cb-typing{align-self:flex-start; display:flex; gap:6px; padding:14px 18px; border:2px solid var(--line); border-radius:255px 14px 225px 14px/14px 225px 14px 255px}
+.cb-typing i{display:block; width:8px; height:8px; border-radius:50%; background:var(--ink2); animation:cbb 1.2s infinite}
+.cb-typing i:nth-child(2){animation-delay:.15s} .cb-typing i:nth-child(3){animation-delay:.3s}
+@keyframes cbb{0%,60%,100%{opacity:.3; transform:none}30%{opacity:1; transform:translateY(-4px)}}
+.cb-chips{display:flex; flex-wrap:wrap; gap:8px; padding:0 18px 12px}
+.cb-chip{font-family:inherit; font-size:18px; min-height:44px; padding:6px 14px; background:transparent; color:var(--ink2); border:2px dashed var(--dash); border-radius:999px; cursor:pointer}
+.cb-chip:hover{color:var(--purple); border-color:var(--purple)}
+.cb-form{display:flex; gap:10px; padding:12px 14px; border-top:2px dashed var(--dash)}
+.cb-input{flex:1; min-width:0; font-family:inherit; font-size:20px; color:var(--ink); background:transparent; border:2px solid var(--line); border-radius:255px 14px 225px 14px/14px 225px 14px 255px; padding:10px 16px; min-height:48px}
+.cb-input::placeholder{color:var(--muted)}
+.cb-input:focus{outline:3px solid var(--purple); outline-offset:2px}
+.cb-send{font-family:inherit; font-size:20px; min-height:48px; padding:8px 20px; background:var(--ink); color:var(--bg); border:2px solid var(--line); border-radius:14px 225px 14px 255px/255px 14px 225px 14px; cursor:pointer}
+.cb-send:disabled{opacity:.5; cursor:default}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+
+/* esantop terminal */
+.et{display:flex; flex-wrap:wrap; align-items:center; gap:36px 56px}
+.et-text{flex:1 1 340px; min-width:0}
+.et-term{flex:1 1 420px; min-width:0; overflow:hidden; background:#16181F}
+.et-bar{display:flex; align-items:center; gap:12px; padding:9px 16px; background:#1F222B; border-bottom:2px solid #8A8F98}
+.et-bar i{display:block; width:11px; height:11px; border:1.6px solid #8A8F98; border-radius:50%}
+.et-screen{padding:16px 18px 18px; font-family:ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size:14px; line-height:1.7; color:#D4D6DC; white-space:pre; overflow-x:auto}
+.et-screen .t{color:#6FB5A8} .et-screen .a{color:#E5A84B} .et-screen .o{color:#A9C26A} .et-screen .b{color:#2F8CFF} .et-screen .g{color:#8A8F98}
+.et-list{list-style:none; margin:18px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+.et-list li{font-size:clamp(19px, 2vw, 22px); color:var(--ink2); padding-left:30px; position:relative}
+.et-list li::before{content:'›'; position:absolute; left:6px; top:0; color:var(--purple)}
+
+/* phones */
+@media (max-width: 760px){
+  .navlinks{display:none}
+  .menubtn{display:inline-flex}
+  .mobmenu{display:flex; flex-direction:column; padding:8px 20px 18px; gap:2px; border-bottom:2px dashed var(--dash); background:var(--bg)}
+  .mobmenu a{font-size:26px; min-height:52px}
+  .fx .frame{padding:76px 18px 28px}
+  .hero{gap:18px}
+  .hero-text{flex-basis:100%}
+  .hero-art{flex-basis:100%; order:-1}
+  .hero-art svg{max-height:27svh}
+  .ctas{margin-top:22px; gap:10px}
+  .ctas .btn{flex:1 1 150px; font-size:19px; padding:10px 14px}
+  .layer{padding:11px 16px}
+  .arrow{height:22px}
+  .apps{grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px}
+  .apps > div{padding:8px 6px}
+  .goal{gap:20px}
+  .goal-art{width:58vw; max-width:240px}
+  .pi{grid-template-columns:minmax(0, 1fr); gap:6px}
+  .pi p{font-size:15px}
+  .pbar .track{height:18px; padding:3px}
+  .pbar .lbl{font-size:17px; width:74px}
+  .plist{gap:14px}
+  .fx .bgnum{font-size:105vw; bottom:-6svh}
+  .cb-log{height:min(48svh, 380px); padding:14px}
+  .cb-msg{max-width:90%; font-size:19px}
+  .cb-form{padding:10px}
+  .cb-send{padding:8px 14px}
+  .et-screen{font-size:12px; padding:12px 14px}
+}
+@media (max-height: 640px) and (max-width: 760px){
+  .hero-art{display:none}
+  .layer .ld, .pi p{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  .lift,.pulse,.draw,.bob,.cb-typing i{animation:none !important}
+  .reveal{transition:none}
+}
+
+.ic-sun,.ic-moon,.ic-open,.ic-close{display:inline-flex}
+.page[data-theme="dark"] .ic-moon{display:none}
+.page:not([data-theme="dark"]) .ic-sun{display:none}
+.menubtn .ic-close{display:none}
+.menubtn[aria-expanded="true"] .ic-close{display:inline-flex}
+.menubtn[aria-expanded="true"] .ic-open{display:none}
+.mobmenu[hidden]{display:none !important}
+.cb-chips[hidden]{display:none !important}
+.cb-src{align-self:flex-start; font-size:16px; color:var(--muted); margin-top:-6px}
+.cb-err{align-self:flex-start; border:2px dashed var(--rose); color:var(--rose); background:var(--rose-wash); border-radius:12px}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="page" data-theme="light" style="min-height: 100vh; width: 100%; overflow-x: clip">
+<script>
+  (function () { // set the theme before first paint
+    var t = null; try { t = localStorage.getItem('esan-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.currentScript.parentNode.setAttribute('data-theme', t);
+  })();
+</script>
+
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <defs>
+      <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"></feTurbulence>
+        <feDisplacementMap in="SourceGraphic" scale="2.6"></feDisplacementMap>
+      </filter>
+      <pattern id="hp" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" style="stroke: var(--purple); stroke-width: 1.4; opacity: .5"></line></pattern>
+      <pattern id="hb" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" style="stroke: var(--blue); stroke-width: 1.4; opacity: .5"></line></pattern>
+      <pattern id="hr" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" style="stroke: var(--rose); stroke-width: 1.4; opacity: .5"></line></pattern>
+    </defs>
+  </svg>
+
+  <!-- NAV (fixed) -->
+  <header style="position: fixed; top: 0; left: 0; right: 0; z-index: 20; background: var(--bg); transition: background-color .5s ease">
+    <nav aria-label="Main" class="wrap" style="padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <a href="#top" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); min-height: 44px">
+        <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true" filter="url(#rough)">
+          <circle cx="20" cy="20" r="17" fill="none" style="stroke: var(--line)" stroke-width="2"></circle>
+          <path d="M9 21 L13 21 L15 14 L19 27 L22 11 L25 25 L27 18 L31 18" fill="none" style="stroke: var(--rose)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <span style="font-size: 28px; line-height: 1">Esan <span style="color: var(--rose)">AI</span></span>
+      </a>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div class="navlinks">
+          <a class="navlink" href="#vision">Vision</a>
+          <a class="navlink" href="#goals">Goals</a>
+          <a class="navlink" href="#progress">Progress</a>
+          <a class="navlink" href="#esantop">esantop</a>
+          <a class="navlink" href="#chat">Chat</a>
+          <a class="navlink" href="#join">Join</a>
+        </div>
+        <button id="theme-btn" class="iconbtn sketch" type="button" aria-label="Switch to dark theme" title="Switch to dark theme">
+          <span class="ic-sun">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"></path></svg>
+          </span>
+          <span class="ic-moon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"></path></svg>
+          </span>
+        </button>
+        <button id="menu-btn" class="iconbtn sketch-2 menubtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span class="ic-close">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </span>
+          <span class="ic-open">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h12M4 17h16"></path></svg>
+          </span>
+        </button>
+      </div>
+    </nav>
+    <div id="mobile-menu" class="mobmenu" hidden>
+        <a class="navlink" href="#vision">Vision</a>
+        <a class="navlink" href="#goals">Goals</a>
+        <a class="navlink" href="#progress">Progress</a>
+        <a class="navlink" href="#esantop">esantop</a>
+        <a class="navlink" href="#chat">Chat</a>
+        <a class="navlink" href="#join">Join</a>
+      </div>
+    <div aria-hidden="true" style="height: 3px; background: var(--dash); opacity: .5"></div>
+    <div class="navprog" aria-hidden="true" style="position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--rose); transform-origin: left center; transform: scaleX(0)"></div>
+  </header>
+
+  <main id="top" style="padding-top: 70px">
+
+    <!-- SCENE 0 · HERO -->
+    <section class="scene" style="--n: 2" aria-labelledby="hero-title">
+      <div class="stage">
+        <div class="frame" data-span="1">
+          <div class="wrap hero">
+            <div class="hero-text">
+              <p class="lift" style="margin: 0 0 14px; font-size: clamp(18px, 2vw, 22px); color: var(--muted)">An open AI project from Edo State, Nigeria</p>
+              <h1 id="hero-title" class="h-hero lift d1">Teaching machines to <span style="color: var(--purple)">speak Esan</span>.</h1>
+              <p class="lede lift d2" style="margin-top: 18px; max-width: 28ch">Every dialect. Every tone. Spoken back with real intonation.</p>
+              <div class="ctas lift d3">
+                <a class="btn btn-solid sketch" href="#vision">Follow the story
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>
+                </a>
+                <a class="btn btn-ghost sketch-2" href="https://github.com/Ekkohng/esan-ai">View on GitHub</a>
+              </div>
+            </div>
+            <div class="hero-art lift d2">
+              <svg viewBox="0 0 520 380" role="img" aria-label="Sketch: an Esan voice goes into the model and comes back as understood, spoken Esan">
+                <g filter="url(#rough)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M30 40 H190 Q200 40 200 50 V140 Q200 150 190 150 H70 L44 176 L50 150 H30 Q20 150 20 140 V50 Q20 40 30 40 Z" style="stroke: var(--line)" stroke-width="2.2"></path>
+                  <path class="draw" d="M40 96 L58 96 L66 70 L76 122 L86 62 L96 128 L106 78 L116 112 L126 86 L136 104 L146 92 L180 92" style="stroke: var(--rose)" stroke-width="3"></path>
+                  <path d="M210 110 C 240 110 250 200 282 200" style="stroke: var(--purple)" stroke-width="2.2"></path>
+                  <path d="M272 192 L284 200 L272 208" style="stroke: var(--purple)" stroke-width="2.2"></path>
+                  <circle cx="232" cy="130" r="3.5" style="fill: var(--purple)"></circle>
+                  <g style="stroke: var(--purple)" stroke-width="2">
+                    <rect x="292" y="176" width="46" height="46" rx="3" fill="url(#hp)"></rect><rect x="305" y="189" width="20" height="20"></rect>
+                    <rect x="348" y="176" width="46" height="46" rx="3" fill="url(#hp)"></rect><rect x="361" y="189" width="20" height="20"></rect>
+                    <rect x="404" y="176" width="46" height="46" rx="3" fill="url(#hp)"></rect><rect x="417" y="189" width="20" height="20"></rect>
+                    <path d="M300 170v-6M314 170v-6M328 170v-6M356 170v-6M370 170v-6M384 170v-6M412 170v-6M426 170v-6M440 170v-6"></path>
+                    <path d="M300 228v6M314 228v6M328 228v6M356 228v6M370 228v6M384 228v6M412 228v6M426 228v6M440 228v6"></path>
+                  </g>
+                  <path d="M428 244 C 428 280 380 286 360 300" style="stroke: var(--blue)" stroke-width="2.2"></path>
+                  <path d="M366 290 L356 302 L370 304" style="stroke: var(--blue)" stroke-width="2.2"></path>
+                  <path d="M200 296 H336 Q346 296 346 306 V352 Q346 362 336 362 H200 Q190 362 190 352 V306 Q190 296 200 296 Z" style="stroke: var(--blue)" stroke-width="2.2" fill="url(#hb)"></path>
+                  <path d="M206 318 H322 M206 340 H290" style="stroke: var(--blue)" stroke-width="2"></path>
+                  <path d="M232 309 L238 302 M268 302 L274 309 M300 331 L306 324" style="stroke: var(--rose)" stroke-width="2.4"></path>
+                </g>
+                <text x="40" y="200" style="fill: var(--muted); font-family: 'Patrick Hand', sans-serif; font-size: 20px">an Esan voice</text>
+                <text x="318" y="262" style="fill: var(--purple); font-family: 'Patrick Hand', sans-serif; font-size: 20px">the model</text>
+                <text x="190" y="290" style="fill: var(--muted); font-family: 'Patrick Hand', sans-serif; font-size: 18px">understood · translated · spoken back</text>
+              </svg>
+            </div>
+          </div>
+          <p class="cue lift d4" aria-hidden="true">scroll <span class="bob">↓</span></p>
+        </div>
+
+        <div class="frame" data-span="1">
+          <div class="wrap" style="display: flex; flex-direction: column; align-items: center; gap: 32px">
+            <svg viewBox="0 0 560 200" style="width: min(520px, 86%); height: auto; max-height: 26svh" aria-hidden="true">
+              <g filter="url(#rough)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2">
+                <rect x="30" y="30" width="200" height="130" rx="8" style="stroke: var(--line)"></rect>
+                <path d="M50 70 H200 M50 100 H180 M50 130 H150" style="stroke: var(--dash)"></path>
+                <path d="M260 95 H320" style="stroke: var(--rose)"></path><path d="M310 85 L322 95 L310 105" style="stroke: var(--rose)"></path>
+                <rect x="350" y="30" width="180" height="130" rx="8" style="stroke: var(--rose)" fill="url(#hr)"></rect>
+                <text x="440" y="110" text-anchor="middle" style="fill: var(--rose); stroke: none; font-family: 'Patrick Hand', sans-serif; font-size: 56px">?</text>
+              </g>
+            </svg>
+            <p class="cap capt"><span class="lit">Esan is spoken, sung and argued in every day,</span> <span class="dim">but today's AI can't hear it, read it or answer in it.</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 1 · VISION -->
+    <section id="vision" class="scene" style="--n: 4" aria-labelledby="vision-title">
+      <div class="stage">
+        <div class="bgnum" aria-hidden="true">1</div>
+        <div class="frame" data-span="1">
+          <div class="wrap">
+            <div style="display: flex; align-items: center; gap: 22px; margin-bottom: 22px">
+              <span class="num" aria-hidden="true">1</span>
+              <h2 id="vision-title" class="h-ch">The vision</h2>
+            </div>
+            <p class="lede" style="max-width: 34ch">= an AI that truly understands Esan, built in layers from the ground up, each one standing on the one before.</p>
+          </div>
+        </div>
+
+        <div class="frame" data-span="2">
+          <div class="stack">
+            <div data-step="" class="layer sketch hatch-r"><span class="ln" style="color: var(--rose)">Esan data</span><span class="ld">words, recordings, stories, text</span></div>
+            <div data-step="" style="width: 94%; display: flex; flex-direction: column; align-items: center">
+              <svg class="arrow" viewBox="0 0 24 44" preserveAspectRatio="none" aria-hidden="true"><path d="M12 4 V38 M5 31 L12 40 L19 31" fill="none" style="stroke: var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div class="layer sketch-2" style="background: var(--paper)"><span class="ln">Linguistic intelligence</span><span class="ld">tone, grammar, spelling</span></div>
+            </div>
+            <div data-step="" style="width: 88%; display: flex; flex-direction: column; align-items: center">
+              <svg class="arrow" viewBox="0 0 24 44" preserveAspectRatio="none" aria-hidden="true"><path d="M12 4 V38 M5 31 L12 40 L19 31" fill="none" style="stroke: var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div class="layer sketch hatch-p"><span class="ln" style="color: var(--purple)">Foundation models</span><span class="ld">trained on Esan itself</span></div>
+            </div>
+            <div data-step="" style="width: 82%; display: flex; flex-direction: column; align-items: center">
+              <svg class="arrow" viewBox="0 0 24 44" preserveAspectRatio="none" aria-hidden="true"><path d="M12 4 V38 M5 31 L12 40 L19 31" fill="none" style="stroke: var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div class="layer sketch-2 hatch-b"><span class="ln" style="color: var(--blue)">Dialect-aware speech engine</span><span class="ld">hears and speaks with real intonation</span></div>
+            </div>
+            <div data-step="" style="width: 100%; display: flex; flex-direction: column; align-items: center">
+              <svg class="arrow" viewBox="0 0 24 44" preserveAspectRatio="none" aria-hidden="true"><path d="M12 4 V38 M5 31 L12 40 L19 31" fill="none" style="stroke: var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div class="apps">
+                <div class="sketch">Tutor</div>
+                <div class="sketch-2">Translator</div>
+                <div class="sketch">Archive</div>
+                <div class="sketch-2">Voice assistant</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="frame" data-span="1">
+          <p class="cap capt"><span class="lit">Start with the language itself,</span> <span class="dim">and every app on top</span> <span style="color: var(--purple)">speaks it natively.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 2 · GOALS -->
+    <section id="goals" class="scene" style="--n: 6" aria-labelledby="goals-title">
+      <div class="stage">
+        <div class="bgnum" aria-hidden="true">2</div>
+        <div class="frame" data-span="1">
+          <div class="wrap">
+            <div style="display: flex; align-items: center; gap: 22px; margin-bottom: 22px">
+              <span class="num" aria-hidden="true">2</span>
+              <h2 id="goals-title" class="h-ch">The goals</h2>
+            </div>
+            <p class="lede" style="max-width: 34ch">= four things the AI should do well, for anyone who speaks Esan or wants to learn it.</p>
+          </div>
+        </div>
+
+        <div class="frame" data-span="1">
+          <article class="goal">
+            <div class="goal-art sketch"><svg viewBox="0 0 96 64" aria-hidden="true"><g filter="url(#rough)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"><path d="M6 32 H18 L24 14 L32 50 L40 8 L48 54 L56 20 L62 40 L68 32 H90" style="stroke: var(--rose)"></path></g></svg></div>
+            <div class="goal-text"><span class="kicker">Goal 1 of 4</span><h3 style="color: var(--rose)">Hear it</h3><p>Speech recognition that turns spoken Esan into accurate text.</p></div>
+          </article>
+        </div>
+        <div class="frame" data-span="1">
+          <article class="goal">
+            <div class="goal-art sketch-2"><svg viewBox="0 0 96 64" aria-hidden="true"><g filter="url(#rough)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"><path d="M8 24 H22 L38 10 V54 L22 40 H8 Z" style="stroke: var(--blue)" fill="url(#hb)"></path><path d="M50 22 Q58 32 50 42 M60 14 Q74 32 60 50 M70 6 Q90 32 70 58" style="stroke: var(--blue)"></path></g></svg></div>
+            <div class="goal-text"><span class="kicker">Goal 2 of 4</span><h3 style="color: var(--blue)">Speak it</h3><p>Dialect-aware text-to-speech with the real rise and fall of Esan tone.</p></div>
+          </article>
+        </div>
+        <div class="frame" data-span="1">
+          <article class="goal">
+            <div class="goal-art sketch"><svg viewBox="0 0 96 64" aria-hidden="true"><g filter="url(#rough)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"><rect x="6" y="8" width="34" height="26" rx="4" style="stroke: var(--purple)" fill="url(#hp)"></rect><rect x="56" y="30" width="34" height="26" rx="4" style="stroke: var(--purple)"></rect><path d="M44 18 H70 V26 M64 22 L70 28 L76 22" style="stroke: var(--purple)"></path><path d="M52 46 H26 V38 M20 42 L26 36 L32 42" style="stroke: var(--purple)"></path></g></svg></div>
+            <div class="goal-text"><span class="kicker">Goal 3 of 4</span><h3 style="color: var(--purple)">Translate it</h3><p>Translation between Esan and English, in both directions.</p></div>
+          </article>
+        </div>
+        <div class="frame" data-span="1">
+          <article class="goal">
+            <div class="goal-art sketch-2"><svg viewBox="0 0 96 64" aria-hidden="true"><g filter="url(#rough)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"><path d="M8 14 Q28 6 46 16 V58 Q28 48 8 56 Z" style="stroke: var(--line)"></path><path d="M88 14 Q68 6 50 16 V58 Q68 48 88 56 Z" style="stroke: var(--line)" fill="url(#hr)"></path><path d="M16 26 H38 M16 36 H34 M58 26 H80 M58 36 H76" style="stroke: var(--dash)"></path></g></svg></div>
+            <div class="goal-text"><span class="kicker">Goal 4 of 4</span><h3>Teach it</h3><p>A patient tutor that helps a new generation learn to speak Esan.</p></div>
+          </article>
+        </div>
+        <div class="frame" data-span="1">
+          <p class="cap capt"><span class="dim">And in time:</span> <span class="lit">a living archive of Esan voices,</span> <span class="dim">and a voice assistant that</span> <span style="color: var(--purple)">answers in Esan.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 3 · DIALECTS -->
+    <section class="scene" style="--n: 2" aria-labelledby="dialect-title">
+      <div class="stage">
+        <div class="frame" data-span="1">
+          <div class="wrap" style="display: flex; flex-direction: column; align-items: center; gap: 28px">
+            <h2 id="dialect-title" class="h-ch" style="text-align: center; font-size: clamp(40px, 6vw, 72px)">One language, <span style="color: var(--blue)">many voices</span></h2>
+            <svg viewBox="0 0 640 170" style="width: min(640px, 100%); height: auto" role="img" aria-label="Sketch of a pitch line rising and falling between high and low tones">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M60 40 H620 M60 130 H620" style="stroke: var(--dash)" stroke-width="2" stroke-dasharray="6 8"></path>
+                <path class="draw" filter="url(#rough)" d="M70 120 C 120 120 130 45 180 45 S 240 125 290 125 S 350 50 400 50 S 450 90 490 90 S 560 40 610 40" style="stroke: var(--blue)" stroke-width="3"></path>
+                <circle cx="180" cy="45" r="6" style="fill: var(--blue)"></circle><circle cx="290" cy="125" r="6" style="fill: var(--blue)"></circle><circle cx="400" cy="50" r="6" style="fill: var(--blue)"></circle><circle cx="610" cy="40" r="6" style="fill: var(--blue)"></circle>
+              </g>
+              <text x="0" y="46" style="fill: var(--muted); font-family: 'Patrick Hand', sans-serif; font-size: 22px">high</text>
+              <text x="0" y="136" style="fill: var(--muted); font-family: 'Patrick Hand', sans-serif; font-size: 22px">low</text>
+            </svg>
+            <p class="lede" style="text-align: center; max-width: 30ch">In Esan, tone carries meaning: the same syllables, pitched differently, say different things.</p>
+          </div>
+        </div>
+        <div class="frame" data-span="1">
+          <div class="wrap" style="display: flex; flex-direction: column; align-items: center; gap: 34px">
+            <div class="pills">
+              <span data-step="" class="sketch">Uromi</span>
+              <span data-step="" class="sketch-2 hatch-b">Ekpoma</span>
+              <span data-step="" class="sketch">Irrua</span>
+              <span data-step="" class="sketch-2">Ubiaja</span>
+              <span data-step="" class="sketch hatch-r">Ugboha</span>
+              <span data-step="" class="sketch-2">Igueben</span>
+              <span data-step="" class="sketch">Ewohimi</span>
+              <span data-step="" class="sketch-2 hatch-p">Ewu</span>
+            </div>
+            <p class="cap capt"><span class="lit">Every town has its own melody,</span> <span style="color: var(--blue)">so the AI has to learn them all.</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 4 · PROGRESS -->
+    <section id="progress" class="scene" style="--n: 4" aria-labelledby="progress-title">
+      <div class="stage">
+        <div class="bgnum" aria-hidden="true">3</div>
+        <div class="frame" data-span="1">
+          <div class="wrap">
+            <div style="display: flex; align-items: center; gap: 22px; margin-bottom: 22px">
+              <span class="num" aria-hidden="true">3</span>
+              <h2 id="progress-title" class="h-ch">The progress</h2>
+            </div>
+            <p class="lede" style="max-width: 34ch">= where the build stands today, step by step.</p>
+          </div>
+        </div>
+
+        <div class="frame" data-span="2">
+          <ol class="plist">
+            <li data-step="" class="pi">
+              <div><h3>Plan and open repo</h3><p>Five-layer architecture planned; goals and code open on <a href="https://github.com/Ekkohng/esan-ai">GitHub</a>.</p></div>
+              <div class="pbar"><div class="track sketch"><div style="height: 100%; width: 100%; background: repeating-linear-gradient(135deg, var(--purple) 0 2px, var(--purple-wash) 2px 8px); border-radius: 4px"></div></div><span class="lbl" style="color: var(--purple)">Done</span></div>
+            </li>
+            <li data-step="" class="pi">
+              <div><h3>Prototype tools built</h3><p>Spelling normaliser, syllable and tone tiers, IPA converter, dialect registry.</p></div>
+              <div class="pbar"><div class="track sketch"><div style="height: 100%; width: 100%; background: repeating-linear-gradient(135deg, var(--purple) 0 2px, var(--purple-wash) 2px 8px); border-radius: 4px"></div></div><span class="lbl" style="color: var(--purple)">Done</span></div>
+            </li>
+            <li data-step="" class="pi">
+              <div><h3>First word list sent out</h3><p>About 70 Esan words and phrases, out to native speakers for recording.</p></div>
+              <div class="pbar"><div class="track sketch"><div style="height: 100%; width: 100%; background: repeating-linear-gradient(135deg, var(--purple) 0 2px, var(--purple-wash) 2px 8px); border-radius: 4px"></div></div><span class="lbl" style="color: var(--purple)">Done</span></div>
+            </li>
+            <li data-step="" class="pi">
+              <div><h3>First recordings</h3><p>Native speakers are recording the word list: the first seeds of the speech dataset.</p></div>
+              <div class="pbar"><div class="track sketch-2"><div class="pulse" style="height: 100%; width: 38%; background: repeating-linear-gradient(135deg, var(--blue) 0 2px, var(--blue-wash) 2px 8px); border-radius: 4px"></div></div><span class="lbl" style="color: var(--blue)">Underway</span></div>
+            </li>
+            <li data-step="" class="pi">
+              <div><h3>esantop, the Esan AI terminal</h3><p>Screens for the monitor, tone QA and dialects are drawn on <a href="https://github.com/Ekkohng/esantop">GitHub</a>; the build is next.</p></div>
+              <div class="pbar"><div class="track sketch-2"><div class="pulse" style="height: 100%; width: 30%; background: repeating-linear-gradient(135deg, var(--blue) 0 2px, var(--blue-wash) 2px 8px); border-radius: 4px"></div></div><span class="lbl" style="color: var(--blue)">Designing</span></div>
+            </li>
+            <li data-step="" class="pi">
+              <div><h3 style="color: var(--ink2)">Pilot dialect dataset</h3><p style="color: var(--muted)">Four speakers from one dialect, about 10 hours of tone-marked sentences.</p></div>
+              <div class="pbar"><div class="track" style="border: 2px dashed var(--dash); border-radius: 10px"></div><span class="lbl" style="color: var(--muted)">Next</span></div>
+            </li>
+            <li data-step="" class="pi">
+              <div><h3 style="color: var(--ink2)">First models that hear and speak</h3><p style="color: var(--muted)">A speech-recognition model, then the first Esan voice, scored by native speakers.</p></div>
+              <div class="pbar"><div class="track" style="border: 2px dashed var(--dash); border-radius: 10px"></div><span class="lbl" style="color: var(--muted)">Next</span></div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="frame" data-span="1">
+          <p class="cap capt"><span class="lit">The plan is drawn, the code is open,</span> <span class="dim">and the first Esan voices</span> <span style="color: var(--rose)">are being recorded.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESANTOP (regular section, fades in with Intersection Observer) -->
+    <section id="esantop" aria-labelledby="esantop-title" style="padding: 110px 18px 20px; scroll-margin-top: 70px">
+      <div class="wrap et reveal">
+        <div class="et-text">
+          <span style="font-size: 20px; color: var(--muted)">Open source · design stage</span>
+          <h2 id="esantop-title" style="margin: 6px 0 12px; font-size: clamp(44px, 6.4vw, 78px); font-weight: 400; line-height: 1"><span style="color: var(--purple)">esantop</span></h2>
+          <p class="lede" style="max-width: 30ch">= the Esan AI terminal: one screen to watch the work, from words coming in to models in training, split by dialect.</p>
+          <ul class="et-list">
+            <li>Monitor: corpus hours per dialect, tone coverage, speakers, training jobs</li>
+            <li>Tone QA: flagged clips go to a native speaker, never auto-corrected</li>
+            <li>Dialects: every dialect in the registry, side by side</li>
+          </ul>
+          <div class="ctas" style="margin-top: 26px">
+            <a class="btn btn-solid sketch" href="https://github.com/Ekkohng/esantop">View esantop on GitHub</a>
+          </div>
+        </div>
+        <figure class="et-term sketch-2" style="margin: 0" aria-label="Sketch of the esantop terminal screen (mockup)">
+          <div class="et-bar" aria-hidden="true"><i></i><i></i><i></i><span style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; color: #D4D6DC; margin-left: 6px">esantop — esan-ai</span></div>
+          <div class="et-screen" aria-hidden="true"><span class="t">┌ corpus by dialect ──────────────┐</span>
+<span class="g">│</span> uromi    <span class="o">▓▓▓▓▓▓▓▓░░░░░░</span>         <span class="g">│</span>
+<span class="g">│</span> ekpoma   <span class="o">▓▓▓▓▓░░░░░░░░░</span>         <span class="g">│</span>
+<span class="g">│</span> irrua    <span class="o">▓▓▓░░░░░░░░░░░</span>         <span class="g">│</span>
+<span class="g">│</span> ugboha   <span class="o">▓▓░░░░░░░░░░░░</span>         <span class="g">│</span>
+<span class="t">├ tone bigrams ───────────────────┤</span>
+<span class="g">│</span> H-H  H-L  L-H  L-L  <span class="a">H-ꜜH</span>        <span class="g">│</span>
+<span class="t">├ jobs ───────────────────────────┤</span>
+<span class="g">│</span> <span class="b">▶</span> asr   tts   mt   tutor        <span class="g">│</span>
+<span class="t">└─────────────────────────────────┘</span>
+<span class="a">↑↓</span> select  <span class="a">r</span> review  <span class="a">d</span> dialects  <span class="a">q</span> quit</div>
+          <figcaption style="padding: 8px 16px 12px; font-size: 16px; color: #8A8F98; background: #16181F">mockup · sample layout, not live data</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- CHAT (regular section, fades in with Intersection Observer) -->
+    <section id="chat" aria-labelledby="chat-title" style="padding: 110px 18px 20px; scroll-margin-top: 70px">
+      <div class="wrap reveal" style="max-width: 780px">
+        <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 14px">
+          <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true" filter="url(#rough)" style="flex: none">
+            <path d="M10 12 H54 Q58 12 58 16 V40 Q58 44 54 44 H26 L14 54 L17 44 H10 Q6 44 6 40 V16 Q6 12 10 12 Z" fill="none" style="stroke: var(--purple)" stroke-width="2.4" stroke-linejoin="round"></path>
+            <path d="M16 28 H22 L25 20 L29 36 L33 18 L37 34 L40 26 H48" fill="none" style="stroke: var(--rose)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <h2 id="chat-title" style="margin: 0; font-size: clamp(40px, 6vw, 68px); font-weight: 400; line-height: 1">Talk to <span style="color: var(--purple)">Esan AI</span></h2>
+        </div>
+        <p class="lede" style="margin: 0 0 28px; max-width: 36ch">= ask about the project, or about Esan. It tells you honestly what it knows so far.</p>
+
+        <div class="cb-win sketch-2">
+          <div class="cb-bar">
+            <span class="cb-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span style="font-size: 24px; color: var(--purple); letter-spacing: .5px">esantop</span>
+            <span id="cb-mode" style="margin-left: auto; font-size: 17px; color: var(--muted)">preview</span>
+          </div>
+          <div class="cb-log" role="log" aria-live="polite" aria-label="Conversation with Esan AI in esantop">
+            <div class="cb-msg cb-bot">Hello! I'm Esan AI. I'm still learning. Ask me about the project, or about Esan, and I'll tell you honestly what I know so far.</div>
+          </div>
+          <div class="cb-chips" id="cb-chips">
+            <button class="cb-chip" type="button">What is Esan AI?</button>
+            <button class="cb-chip" type="button">How can I help?</button>
+            <button class="cb-chip" type="button">Why does tone matter?</button>
+            <button class="cb-chip" type="button">What is esantop?</button>
+          </div>
+          <form class="cb-form" id="cb-form" autocomplete="off">
+            <label for="cb-input" class="sr">Message to Esan AI</label>
+            <input id="cb-input" class="cb-input" type="text" maxlength="1000" placeholder="Ask Esan AI…">
+            <button class="cb-send" type="submit">Send</button>
+          </form>
+        </div>
+        <p style="margin: 14px 0 0; font-size: 22px; color: var(--ink2); text-align: center"><span style="color: var(--purple)">esantop</span> · the Esan AI terminal</p>
+        <p id="cb-note" style="margin: 4px 0 0; font-size: 17px; color: var(--muted); text-align: center">Preview answers. The live chat answers from a word list checked by native speakers.</p>
+      </div>
+    </section>
+
+    <!-- JOIN (regular section, fades in with Intersection Observer) -->
+    <section id="join" aria-labelledby="join-title" style="padding: 96px 18px 110px; scroll-margin-top: 70px">
+      <div class="wrap reveal sketch-2" style="padding: clamp(28px, 5vw, 64px) clamp(20px, 5vw, 64px); background: var(--paper); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px">
+        <h2 id="join-title" style="margin: 0; font-size: clamp(40px, 6vw, 72px); font-weight: 400; line-height: 1.04">Help Esan <span style="color: var(--rose)">find its voice</span>.</h2>
+        <p style="margin: 0; font-size: clamp(20px, 2.3vw, 24px); color: var(--ink2); max-width: 38ch; line-height: 1.4">Speakers can record words. Linguists can guide spelling and tone. Engineers can build the models.</p>
+        <div class="ctas" style="justify-content: center; margin-top: 8px; width: 100%">
+          <a class="btn btn-solid sketch" href="https://github.com/Ekkohng/esan-ai">Contribute on GitHub</a>
+          <a class="btn btn-ghost sketch-2" href="mailto:osereme@arreba.net">Email the project</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap reveal" style="padding: 24px 18px 40px; border-top: 2px dashed var(--dash); display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; font-size: 19px; color: var(--muted)">
+    <span>Esan AI · an open project from Edo State, Nigeria · <a href="https://github.com/Ekkohng/esan-ai">esan-ai</a> · <a href="https://github.com/Ekkohng/esantop">esantop</a></span>
+    <span>Started by Christian Ekoh</span>
+  </footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

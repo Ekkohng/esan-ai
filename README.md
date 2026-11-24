@@ -2,6 +2,8 @@
 
 **Teaching AI to understand and speak Esan, in its own dialects, tones and voice.**
 
+🌐 **Website:** [ekkohng.github.io/esan-ai](https://ekkohng.github.io/esan-ai/) · 🖥️ **Terminal monitor:** [esantop](https://github.com/Ekkohng/esantop)
+
 > 🤝 **We're looking for collaborators!** Esan speakers from any dialect, linguists, teachers, engineers, and anyone with Esan recordings or texts. See [How you can help](#how-you-can-help) or email **[osereme@arreba.net](mailto:osereme@arreba.net)**.
 
 Esan (ISO 639-3: `ish`) is an Edoid language spoken in Edo State, Nigeria. It is tonal, and it varies from town to town: Uromi, Ekpoma, Irrua, Ubiaja, Ugboha, Ewohimi, Igueben, Ewatto and more. Almost no AI tools exist for it today. This project aims to change that, built with Esan speakers and owned by the community.
